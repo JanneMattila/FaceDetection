@@ -12,8 +12,15 @@ namespace FaceBlur
 {
     public class Program
     {
-        private const string SubscriptionKey = "";
-        private const string FaceEndpoint = "";
+        /// <summary>
+        /// Key from Face API resource (32 characters long).
+        /// </summary>
+        private const string SubscriptionKey = "123456abcdef123456abcdef123456ab";
+
+        /// <summary>
+        /// Endpoint address from Face API resource.
+        /// </summary>
+        private const string FaceEndpoint = "https://<yourresourcename>.cognitiveservices.azure.com";
 
         public static async Task Main(string[] args)
         {
