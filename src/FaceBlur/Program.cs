@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.CognitiveServices.Vision.Face;
+﻿using ImageMagick;
+using Microsoft.Azure.CognitiveServices.Vision.Face;
 using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
 using System;
 using System.Collections.Generic;
@@ -29,35 +30,72 @@ namespace FaceBlur
                 Endpoint = FaceEndpoint
             };
 
+            var fill = 1;
             var input = @"C:\temp\demoimage.jpg";
             var output = @"C:\temp\demoimage_output.jpg";
-            var brush = new SolidBrush(Color.DarkGray);
 
             try
             {
-                IList<DetectedFace> faceList;
+                IList<DetectedFace> faces;
                 using (var stream = File.OpenRead(input))
                 {
-                    faceList = await client.Face.DetectWithStreamAsync(stream);
+                    faces = await client.Face.DetectWithStreamAsync(stream);
                 }
 
-                using (var bitmap = new Bitmap(input))
-                using (var stream = File.OpenWrite(output))
+                switch (fill)
                 {
-                    var graphics = Graphics.FromImage(bitmap);
-                    foreach (var face in faceList)
-                    {
-                        graphics.FillRectangle(brush, 
-                            face.FaceRectangle.Left, face.FaceRectangle.Top,
-                            face.FaceRectangle.Width, face.FaceRectangle.Height);
-                    }
-                    graphics.Save();
-                    bitmap.Save(stream, ImageFormat.Png);
+                    case 1:
+                        SolidFill(faces, input, output);
+                        break;
+                    case 2:
+                        BlurFill(faces, input, output);
+                        break;
+                    default:
+                        break;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
+            }
+        }
+
+        private static void SolidFill(IList<DetectedFace> faces, string input, string output)
+        {
+            var brush = new SolidBrush(Color.DarkGray);
+
+            using (var bitmap = new Bitmap(input))
+            using (var stream = File.OpenWrite(output))
+            {
+                var graphics = Graphics.FromImage(bitmap);
+                foreach (var face in faces)
+                {
+                    graphics.FillRectangle(brush,
+                        face.FaceRectangle.Left, face.FaceRectangle.Top,
+                        face.FaceRectangle.Width, face.FaceRectangle.Height);
+                }
+                graphics.Save();
+                bitmap.Save(stream, ImageFormat.Png);
+            }
+        }
+
+        private static void BlurFill(IList<DetectedFace> faces, string input, string output)
+        {
+            using (var image = new MagickImage(input))
+            {
+                foreach (var face in faces)
+                {
+                    using (var part = image.Clone())
+                    {
+                        part.Crop(new MagickGeometry(
+                            face.FaceRectangle.Left, face.FaceRectangle.Top,
+                            face.FaceRectangle.Width, face.FaceRectangle.Height));
+                        part.RePage();
+                        part.Blur(0, 5);
+                        image.Composite(part, face.FaceRectangle.Left, face.FaceRectangle.Top, CompositeOperator.Atop);
+                    }
+                }
+                image.Write(output, MagickFormat.Png);
             }
         }
     }
