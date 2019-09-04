@@ -19,9 +19,12 @@ namespace FaceBlur
         private const string SubscriptionKey = "123456abcdef123456abcdef123456ab";
 
         /// <summary>
-        /// Endpoint address from Face API resource.
+        /// Endpoint address from Face API resource. 
+        /// https://yourresourcename.cognitiveservices.azure.com
+        /// Or in case of containers:
+        /// http://localhost:5000
         /// </summary>
-        private const string FaceEndpoint = "https://<yourresourcename>.cognitiveservices.azure.com";
+        private const string FaceEndpoint = "http://localhost:5000";
 
         public static async Task Main(string[] args)
         {
